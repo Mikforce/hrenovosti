@@ -50,5 +50,5 @@ func ExampleScrape(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", ExampleScrape)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
