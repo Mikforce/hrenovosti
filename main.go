@@ -10,7 +10,7 @@ import (
 
 func ExampleScrape(w http.ResponseWriter, r *http.Request) {
 	// Request the HTML page.
-	res, err := http.Get("https://panorama.pub/news/28-07-2023")
+	res, err := http.Get("https://panorama.pub")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,5 +35,5 @@ func ExampleScrape(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", ExampleScrape)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
