@@ -8,7 +8,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func ExampleScrape() {
+func ExampleScrape(w http.ResponseWriter, r *http.Request) {
 	// Request the HTML page.
 	res, err := http.Get("https://panorama.pub/news/28-07-2023")
 	if err != nil {
@@ -29,10 +29,11 @@ func ExampleScrape() {
 	doc.Find(".grid-cols-1 ").Each(func(i int, s *goquery.Selection) {
 		// For each item found, get the title
 		title := s.Find("a").Text()
-		fmt.Printf("Review %d: %s\n", i, title)
+		fmt.Fprintf(w, "Review %d: %s\n", i, title)
 	})
 }
 
 func main() {
-	ExampleScrape()
+	http.HandleFunc("/", ExampleScrape)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
