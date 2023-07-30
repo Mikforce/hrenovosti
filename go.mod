@@ -26,6 +26,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/gocolly/colly/v2 v2.1.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
