@@ -142,6 +142,6 @@ func main() {
 	// Устанавливаем путь к файлам шаблонов
 	tmplPath := "html"
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(tmplPath))))
-	fmt.Println("Server started on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Server started on http://localhost:80")
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
