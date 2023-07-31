@@ -164,32 +164,19 @@
       <span class="fs-4">Хреновости</span>
     </a>
   </header>
-
+ 
   <main>
+    {{range .}}
     <article>
         <h3>{{.Title}}</h3>
         <img src="{{.ImageURL}}" alt="{{.Title}}" class="img-fluid">
         
         <a href="{{.Link}}" class="btn btn-primary">Read More</a>
     </article>
-
+   
     <hr class="col-3 col-md-2 mb-5">
-
-    <article>
-        <h3>{{.Title}}</h3>
-        <img src="{{.ImageURL}}" alt="{{.Title}}" class="img-fluid">
-        
-        <a href="{{.Link}}" class="btn btn-primary">Read More</a>
-    </article>
-    <hr class="col-3 col-md-2 mb-5">
-
-    <article>
-        <h3>{{.Title}}</h3>
-        <img src="{{.ImageURL}}" alt="{{.Title}}" class="img-fluid">
-        
-        <a href="{{.Link}}" class="btn btn-primary">Read More</a>
-    </article>
-
+    {{end}}
+   
   </main>
   <footer class="pt-5 my-5 text-body-secondary border-top">
     Created by Fom &middot; &copy; 2023

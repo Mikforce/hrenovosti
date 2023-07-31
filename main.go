@@ -110,30 +110,37 @@ func randomNewsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 }
-func getRandomNews(db *sql.DB) (News, error) {
+func getRandomNews(db *sql.DB) ([]News, error) {
 	var id int
 	var title, imageUrl, link string
 
-	// Получаем количество записей в таблице
-	var count int
-	err := db.QueryRow("SELECT COUNT(*) FROM news").Scan(&count)
+	// Получаем три случайные записи из таблицы
+	query := "SELECT id, title, image_url, link FROM news ORDER BY RANDOM() LIMIT 3"
+	rows, err := db.Query(query)
 	if err != nil {
-		return News{}, fmt.Errorf("ошибка при получении количества новостей: %v", err)
+		return nil, fmt.Errorf("ошибка при получении случайных записей: %v", err)
+	}
+	defer rows.Close()
+
+	newsList := []News{}
+
+	// Итерируем по результирующим строкам
+	for rows.Next() {
+		err := rows.Scan(&id, &title, &imageUrl, &link)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка при сканировании строки: %v", err)
+		}
+
+		// Формируем объект News и добавляем его в список
+		news := News{Title: title, ImageURL: imageUrl, Link: "https://panorama.pub" + link}
+		newsList = append(newsList, news)
 	}
 
-	// Генерируем случайный индекс от 1 до count
-	randomIndex := rand.Intn(count) + 1
-
-	// Выполняем запрос на выборку рандомной записи
-	query := fmt.Sprintf("SELECT id, title, image_url, link FROM news WHERE id = %d", randomIndex)
-	err = db.QueryRow(query).Scan(&id, &title, &imageUrl, &link)
-	if err != nil {
-		return News{}, fmt.Errorf("ошибка при получении рандомной записи: %v", err)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("ошибка при итерации по строкам результата: %v", err)
 	}
 
-	// Формируем результат
-	result := News{Title: title, ImageURL: imageUrl, Link: "https://panorama.pub" + link}
-	return result, nil
+	return newsList, nil
 }
 
 func main() {
