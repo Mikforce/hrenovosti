@@ -43,7 +43,7 @@ func parseNews(url string) ([]News, error) {
 			imageURL, _ := s.Find("img").Attr("src")
 			link, _ := s.Find("a").Attr("href")
 
-			news := News{Title: title, ImageURL: imageURL, Link: "https://panorama.pub" + link}
+			news := News{Title: title, ImageURL: imageURL, Link: link}
 			newsList = append(newsList, news)
 		}
 	})
