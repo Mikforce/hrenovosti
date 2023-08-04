@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -146,9 +147,64 @@ func getRandomNews(db *sql.DB) ([]News, error) {
 func main() {
 	baze()
 	http.HandleFunc("/", randomNewsHandler)
+	http.HandleFunc("/articles", getAllArticlesHandler)
 	// Устанавливаем путь к файлам шаблонов
 	tmplPath := "html"
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(tmplPath))))
 	fmt.Println("Server started on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func getAllArticlesHandler(w http.ResponseWriter, r *http.Request) {
+	// Establish a connection to the database
+	db, err := sql.Open("sqlite3", "news.db")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error connecting to database: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Retrieve all articles from the database
+	articles, err := getAllArticles(db)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error getting articles from database: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert articles to JSON and send the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(articles)
+}
+
+func getAllArticles(db *sql.DB) ([]News, error) {
+	var id int
+	var title, imageUrl, link string
+
+	// Execute the query to fetch all articles from the database
+	query := "SELECT id, title, image_url, link FROM news"
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	articlesList := []News{}
+
+	// Iterate through the result rows and create News objects
+	for rows.Next() {
+		err := rows.Scan(&id, &title, &imageUrl, &link)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		// Form the News object and add it to the list
+		article := News{Title: title, ImageURL: imageUrl, Link: "https://panorama.pub" + link}
+		articlesList = append(articlesList, article)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating through result rows: %v", err)
+	}
+
+	return articlesList, nil
 }
