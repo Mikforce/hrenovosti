@@ -2,15 +2,15 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -89,27 +89,25 @@ func baze() {
 		}
 	}
 }
-func randomNewsHandler(w http.ResponseWriter, r *http.Request) {
-
+func randomNewsHandler(c *gin.Context) {
 	// Устанавливаем соединение с базой данных
 	db, err := sql.Open("sqlite3", "news.db")
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error connecting to database: %v", err)})
+		return
 	}
 	defer db.Close()
 
 	// Вызываем функцию getRandomNews
 	result, err := getRandomNews(db)
 	if err != nil {
-		log.Fatal(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error getting random news: %v", err)})
+		return
 	}
 
 	// Отправляем результат в шаблон
-	tmpl := template.Must(template.ParseFiles("html/home.html"))
-	err = tmpl.Execute(w, result)
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	c.HTML(http.StatusOK, "home.html", gin.H{"news": result})
 }
 func getRandomNews(db *sql.DB) ([]News, error) {
 	var id int
@@ -144,44 +142,38 @@ func getRandomNews(db *sql.DB) ([]News, error) {
 	return newsList, nil
 }
 
-func main() {
-	baze()
-	http.HandleFunc("/", randomNewsHandler)
-	http.HandleFunc("/articles", getAllArticlesHandler)
-	// Устанавливаем путь к файлам шаблонов
-	tmplPath := "html"
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(tmplPath))))
-	fmt.Println("Server started on http://localhost:80")
-	log.Fatal(http.ListenAndServe(":80", nil))
-}
+func getAllArticlesHandler(c *gin.Context) {
+	// Get the 'num' parameter from the query string
+	num := c.DefaultQuery("num", "3") // Default to 3 if 'num' is not specified
+	// Convert 'num' to an integer
+	numArticles, err := strconv.Atoi(num)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid 'num' parameter"})
+		return
+	}
 
-func getAllArticlesHandler(w http.ResponseWriter, r *http.Request) {
-	// Establish a connection to the database
+	// Connect to the database
 	db, err := sql.Open("sqlite3", "news.db")
 	if err != nil {
-		http.Error(w, fmt.Sprintf("error connecting to database: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error connecting to database: %v", err)})
 		return
 	}
 	defer db.Close()
 
-	// Retrieve all articles from the database
-	articles, err := getAllArticles(db)
+	// Get all articles from the database
+	articles, err := getAllArticles(db, numArticles)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("error getting articles from database: %v", err), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error getting articles from database: %v", err)})
 		return
 	}
 
-	// Convert articles to JSON and send the response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(articles)
+	// Send the list of articles in JSON format
+	c.JSON(http.StatusOK, articles)
 }
+func getAllArticles(db *sql.DB, numArticles int) ([]News, error) {
+	// Execute the query to get all articles from the database
+	query := fmt.Sprintf("SELECT id, title, image_url, link FROM news LIMIT %d", numArticles)
 
-func getAllArticles(db *sql.DB) ([]News, error) {
-	var id int
-	var title, imageUrl, link string
-
-	// Execute the query to fetch all articles from the database
-	query := "SELECT id, title, image_url, link FROM news"
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
@@ -190,15 +182,18 @@ func getAllArticles(db *sql.DB) ([]News, error) {
 
 	articlesList := []News{}
 
-	// Iterate through the result rows and create News objects
+	// Iterate through the result rows and create news objects.
 	for rows.Next() {
-		err := rows.Scan(&id, &title, &imageUrl, &link)
+		var id int
+		var title, imageURL, link string
+
+		err := rows.Scan(&id, &title, &imageURL, &link)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		// Form the News object and add it to the list
-		article := News{Title: title, ImageURL: imageUrl, Link: "https://panorama.pub" + link}
+		// Create a News object and add it to the list
+		article := News{Title: title, ImageURL: imageURL, Link: "https://panorama.pub" + link}
 		articlesList = append(articlesList, article)
 	}
 
@@ -207,4 +202,18 @@ func getAllArticles(db *sql.DB) ([]News, error) {
 	}
 
 	return articlesList, nil
+}
+
+func main() {
+	r := gin.Default()
+	r.LoadHTMLGlob("html/*") // Load HTML templates
+
+	go baze()
+
+	r.GET("/", randomNewsHandler)
+	r.GET("/articles", getAllArticlesHandler)
+	r.Static("/static", "./static") // Serve static files
+
+	fmt.Println("Server started on http://localhost:80")
+	log.Fatal(r.Run(":80"))
 }
