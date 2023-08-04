@@ -143,16 +143,16 @@ func getRandomNews(db *sql.DB) ([]News, error) {
 }
 
 func getAllArticlesHandler(c *gin.Context) {
-	// Get the 'num' parameter from the query string
-	num := c.DefaultQuery("num", "3") // Default to 3 if 'num' is not specified
-	// Convert 'num' to an integer
+	// Получить параметр 'num' из строки запроса
+	num := c.DefaultQuery("num", "3") // По умолчанию 3, если «число» не указано
+	// Преобразование «число» в целое число
 	numArticles, err := strconv.Atoi(num)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid 'num' parameter"})
 		return
 	}
 
-	// Connect to the database
+	// Подключиться к базе данных
 	db, err := sql.Open("sqlite3", "news.db")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error connecting to database: %v", err)})
@@ -209,11 +209,68 @@ func main() {
 	r.LoadHTMLGlob("html/*") // Load HTML templates
 
 	go baze()
+	r.DELETE("/articles/delete", deleteArticleHandler)
 
 	r.GET("/", randomNewsHandler)
 	r.GET("/articles", getAllArticlesHandler)
 	r.Static("/static", "./static") // Serve static files
 
+	// New endpoint to add an article
+	r.POST("/articles/add", addArticleHandler)
+
 	fmt.Println("Server started on http://localhost:80")
 	log.Fatal(r.Run(":80"))
+}
+
+type Article struct {
+	Title    string `json:"title"`
+	ImageURL string `json:"image_url"`
+	Link     string `json:"link"`
+}
+
+func addArticleHandler(c *gin.Context) {
+	// Parse the JSON request body into the Article struct
+	var article Article
+	if err := c.ShouldBindJSON(&article); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
+		return
+	}
+
+	// Connect to the database
+	db, err := sql.Open("sqlite3", "news.db")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error connecting to database: %v", err)})
+		return
+	}
+	defer db.Close()
+
+	// Insert the article into the database
+	_, err = db.Exec("INSERT INTO news (title, image_url, link) VALUES (?, ?, ?)", article.Title, article.ImageURL, article.Link)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error inserting data into database: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Article added successfully"})
+}
+func deleteArticleHandler(c *gin.Context) {
+	// Get the article ID from the query parameter
+	articleID := c.Query("id")
+
+	// Connect to the database
+	db, err := sql.Open("sqlite3", "news.db")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error connecting to database: %v", err)})
+		return
+	}
+	defer db.Close()
+
+	// Delete the article from the database
+	_, err = db.Exec("DELETE FROM news WHERE id = ?", articleID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error deleting article from database: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
