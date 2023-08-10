@@ -24,7 +24,24 @@ type News struct {
 
 func gopython() {
 	// Specify the Python script file to execute
-	pythonScript := "main.py"
+	pythonScript := "parsria.py"
+
+	// Prepare the command to run the Python script
+	cmd := exec.Command("/usr/bin/python3", pythonScript)
+
+	// Set up pipes for standard output and error
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Execute the Python script
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+}
+func gopythontwo() {
+	// Specify the Python script file to execute
+	pythonScript := "parspanorama.py"
 
 	// Prepare the command to run the Python script
 	cmd := exec.Command("/usr/bin/python3", pythonScript)
@@ -225,11 +242,13 @@ func getAllArticles(db *sql.DB, numArticles int) ([]News, error) {
 }
 
 func main() {
+
+	// go baze()
+	go gopython()
+	go gopythontwo()
+
 	r := gin.Default()
 	r.LoadHTMLGlob("html/*") // Load HTML templates
-
-	go baze()
-	go gopython()
 
 	r.DELETE("/articles/delete", deleteArticleHandler)
 
@@ -240,8 +259,8 @@ func main() {
 	// New endpoint to add an article
 	r.POST("/articles/add", addArticleHandler)
 
-	fmt.Println("Server started on http://localhost:80")
-	log.Fatal(r.Run(":80"))
+	fmt.Println("Server started on http://localhost:8080")
+	log.Fatal(r.Run(":8080"))
 }
 
 type Article struct {

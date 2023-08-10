@@ -16,15 +16,17 @@ news_items = soup.find_all(class_='list-item')
 conn = sqlite3.connect('news.db')
 cursor = conn.cursor()
 
-# Создаем таблицу, если она не существует
+# Создаем таблицу для новостей, если она еще не существует
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS news (
         id INTEGER PRIMARY KEY,
         title TEXT,
-        link TEXT UNIQUE,  -- Make 'link' column unique to prevent duplicates
-        image_url TEXT
+        image_url TEXT,
+        link TEXT UNIQUE
     )
 ''')
+conn.commit()
+
 
 for news in news_items:
     title = news.find(class_='list-item__title').text.strip()
@@ -37,20 +39,17 @@ for news in news_items:
     else:
         image_url = None
 
-    # Проверяем, есть ли новость с такой ссылкой в базе данных
-    existing_news = cursor.execute('SELECT id FROM news WHERE link = ?', (link,)).fetchone()
-
-    if existing_news:
-        print(f"Новость с ссылкой '{link}' уже существует. Пропускаем.")
-    else:
+    try:
         # Вставляем данные в базу данных
         cursor.execute('INSERT INTO news (title, link, image_url) VALUES (?, ?, ?)', (title, link, image_url))
-
         print(f"Заголовок: {title}")
         print(f"Ссылка: {link}")
         print(f"Изображение: {image_url}")
         print("=" * 50)
+        conn.commit()
+    except sqlite3.IntegrityError:
+        print(f"Новость с ссылкой '{link}' уже существует в базе данных. Пропускаю...")
 
 # Сохраняем изменения и закрываем соединение с базой данных
-conn.commit()
+
 conn.close()
