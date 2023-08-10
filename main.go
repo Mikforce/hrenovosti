@@ -274,3 +274,67 @@ func deleteArticleHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
+
+// package main
+
+// import (
+// 	"database/sql"
+// 	"fmt"
+// 	"log"
+// 	"strings"
+
+// 	"github.com/PuerkitoBio/goquery"
+// )
+
+// func main() {
+// 	// URL страницы с новостями
+// 	url := "https://ria.ru/world/"
+
+// 	// Получаем HTML-контент страницы
+// 	doc, err := goquery.NewDocument(url)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	// Создаем или подключаемся к базе данных SQLite3
+// 	db, err := sql.Open("sqlite3-lite", "news.db")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer db.Close()
+
+// 	// Создаем таблицу, если она не существует
+// 	_, err = db.Exec(`
+// 		CREATE TABLE IF NOT EXISTS news1 (
+// 			id INTEGER PRIMARY KEY,
+// 			title TEXT,
+// 			link TEXT,
+// 			image_url TEXT
+// 		)
+// 	`)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	// Итерируемся по элементам с классом "list-item"
+// 	doc.Find(".list-item").Each(func(i int, s *goquery.Selection) {
+// 		// Получаем заголовок и ссылку
+// 		title := strings.TrimSpace(s.Find(".list-item__title").Text())
+// 		link, _ := s.Find("a").Attr("href")
+
+// 		// Получаем ссылку на изображение, если оно есть
+// 		imageURL, _ := s.Find("img").Attr("src")
+
+// 		// Вставляем данные в базу данных
+// 		_, err := db.Exec("INSERT INTO news (title, link, image_url) VALUES (?, ?, ?)", title, link, imageURL)
+// 		if err != nil {
+// 			log.Println("Ошибка при вставке данных:", err)
+// 		}
+
+// 		// Выводим информацию
+// 		fmt.Println("Заголовок:", title)
+// 		fmt.Println("Ссылка:", link)
+// 		fmt.Println("Изображение:", imageURL)
+// 		fmt.Println("=")
+// 	})
+// }

@@ -2,52 +2,49 @@ import requests
 from bs4 import BeautifulSoup
 import sqlite3
 
-# Определяем URL страницы, которую будем парсить
-url = "https://ria.ru/organization_API"
+# URL страницы с новостями
+url = 'https://ria.ru/world/'
 
-# Отправляем GET-запрос и получаем содержимое страницы
 response = requests.get(url)
-page_content = response.content
+html_content = response.text
 
-# Создаем объект BeautifulSoup для парсинга HTML-кода
-soup = BeautifulSoup(page_content, "html.parser")
+soup = BeautifulSoup(html_content, 'html.parser')
 
-# Находим все элементы с классом "list-item"
-news_items = soup.find_all(class_="list-item")
+news_items = soup.find_all(class_='list-item')
 
-# Устанавливаем соединение с базой данных
-conn = sqlite3.connect("news.db")
+# Создаем или подключаемся к базе данных
+conn = sqlite3.connect('news.db')
 cursor = conn.cursor()
 
-# Создаем таблицу news, если она еще не существует
-cursor.execute("""
+# Создаем таблицу, если она не существует
+cursor.execute('''
     CREATE TABLE IF NOT EXISTS news (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY,
         title TEXT,
-        image_url TEXT,
-        link TEXT
+        link TEXT,
+        image_url TEXT
     )
-""")
+''')
 
-# Проходимся по каждому элементу "list-item" и извлекаем необходимые данные
-for item in news_items:
-    # Извлекаем заголовок новости
-    title = item.find(class_="list-item__title").text.strip()
+for news in news_items:
+    title = news.find(class_='list-item__title').text.strip()
+    link = news.find('a')['href']
 
-    # Извлекаем ссылку на новость
-    link = item.find("a")["href"]
+    # Находим тег с изображением, если оно есть
+    image_tag = news.find('img')
+    if image_tag:
+        image_url = image_tag['src']
+    else:
+        image_url = None
 
-    # Извлекаем URL изображения
-    image_url = item.find("img")["src"]
+    # Вставляем данные в базу данных
+    cursor.execute('INSERT INTO news (title, link, image_url) VALUES (?, ?, ?)', (title, link, image_url))
 
-    # Вставляем данные о новости в таблицу
-    cursor.execute("""
-        INSERT INTO news (title, image_url, link)
-        VALUES (?, ?, ?)
-    """, (title, image_url, link))
+    print(f"Заголовок: {title}")
+    print(f"Ссылка: {link}")
+    print(f"Изображение: {image_url}")
+    print("=" * 50)
 
-    # Сохраняем изменения
-    conn.commit()
-
-# Закрываем соединение с базой данных
+# Сохраняем изменения и закрываем соединение с базой данных
+conn.commit()
 conn.close()
