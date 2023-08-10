@@ -14,9 +14,11 @@ import (
 )
 
 type News struct {
-	Title    string
-	ImageURL string
-	Link     string
+	ID       int    // Идентификатор новости
+	Title    string // Заголовок новости
+	ImageURL string // URL изображения новости
+	Link     string // URL новости
+	Source   string // Источник новости
 }
 
 func gopython() {
@@ -177,16 +179,14 @@ func getRandomNews(db *sql.DB) ([]News, error) {
 }
 
 func getAllArticlesHandler(c *gin.Context) {
-	// Получить параметр 'num' из строки запроса
-	num := c.DefaultQuery("num", "10") // По умолчанию 10, если «число» не указано
-	// Преобразование «число» в целое число
+	source := c.DefaultQuery("source", "")
+	num := c.DefaultQuery("num", "10")
 	numArticles, err := strconv.Atoi(num)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid 'num' parameter"})
 		return
 	}
 
-	// Подключиться к базе данных
 	db, err := sql.Open("sqlite3", "news.db")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error connecting to database: %v", err)})
@@ -194,16 +194,42 @@ func getAllArticlesHandler(c *gin.Context) {
 	}
 	defer db.Close()
 
-	// Получить все статьи из базы данных
-	articles, err := getAllArticles(db, numArticles)
+	var articles []News
+	if source == "" {
+		articles, err = getAllArticles(db, numArticles)
+	} else {
+		articles, err = getArticlesBySource(db, source, numArticles)
+	}
+
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error getting articles from database: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error getting articles: %v", err)})
 		return
 	}
 
-	// Send the list of articles in JSON format
 	c.JSON(http.StatusOK, articles)
 }
+
+func getArticlesBySource(db *sql.DB, source string, numArticles int) ([]News, error) {
+	query := "SELECT id, title, image_url, link, source FROM news WHERE source = ? LIMIT ?"
+
+	rows, err := db.Query(query, source, numArticles)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	articlesList := []News{}
+	for rows.Next() {
+		var article News
+		if err := rows.Scan(&article.ID, &article.Title, &article.ImageURL, &article.Link, &article.Source); err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		articlesList = append(articlesList, article)
+	}
+
+	return articlesList, nil
+}
+
 func getAllArticles(db *sql.DB, numArticles int) ([]News, error) {
 	// Выполните запрос, чтобы получить все статьи из базы данных
 	query := fmt.Sprintf("SELECT id, title, image_url, link FROM news LIMIT %d", numArticles)
@@ -312,3 +338,20 @@ func deleteArticleHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
+
+// Получение всех новостей:
+// Вы можете получить все новости, отправив GET-запрос на URL вашего веб-сервера. Например:
+
+// GET http://localhost:8080/articles
+// Получение новостей по источнику:
+// Чтобы получить новости по определенному источнику, отправьте GET-запрос на URL вашего веб-сервера с параметром source. Например:
+
+// GET http://localhost:8080/articles?source=example_source
+// Получение определенного количества новостей:
+// Если вы хотите получить определенное количество новостей, отправьте GET-запрос на URL вашего веб-сервера с параметром num. Например, чтобы получить 5 новостей:
+
+// GET http://localhost:8080/articles?num=5
+// Получение новостей по источнику и количеству:
+// Вы также можете комбинировать параметры source и num, чтобы получить новости по определенному источнику и указанному количеству. Например:
+
+// GET http://localhost:8080/articles?source=example_source&num=3

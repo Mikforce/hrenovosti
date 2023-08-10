@@ -12,7 +12,8 @@ cursor.execute('''
         id INTEGER PRIMARY KEY,
         title TEXT,
         image_url TEXT,
-        link TEXT UNIQUE
+        link TEXT UNIQUE,
+        source TEXT 
     )
 ''')
 conn.commit()
@@ -26,12 +27,13 @@ soup = BeautifulSoup(response.content, 'html.parser')
 news_list = soup.find_all('a', class_='hover:text-secondary')
 
 for news in news_list:
+    source = "p"
     title = news.find('div', class_='text-xl').text.strip()
     image_url = news.find('img')['src']
     link = news['href']
 
     try:
-        cursor.execute('INSERT INTO news (title, image_url, link) VALUES (?, ?, ?)', (title, image_url, "https://panorama.pub" + link))
+        cursor.execute('INSERT INTO news (title, image_url, link, source)  VALUES (?, ?, ?, ?)', (title, image_url, "https://panorama.pub" + link, source))
         conn.commit()
     except sqlite3.IntegrityError:
         print(f"Новость с ссылкой '{link}' уже существует в базе данных. Пропускаю...")

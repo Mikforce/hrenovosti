@@ -22,7 +22,8 @@ cursor.execute('''
         id INTEGER PRIMARY KEY,
         title TEXT,
         image_url TEXT,
-        link TEXT UNIQUE
+        link TEXT UNIQUE,
+        source TEXT    
     )
 ''')
 conn.commit()
@@ -31,6 +32,7 @@ conn.commit()
 for news in news_items:
     title = news.find(class_='list-item__title').text.strip()
     link = news.find('a')['href']
+    source = "r"
 
     # Находим тег с изображением, если оно есть
     image_tag = news.find('img')
@@ -41,7 +43,7 @@ for news in news_items:
 
     try:
         # Вставляем данные в базу данных
-        cursor.execute('INSERT INTO news (title, link, image_url) VALUES (?, ?, ?)', (title, link, image_url))
+        cursor.execute('INSERT INTO news (title, link, image_url, source) VALUES (?, ?, ?, ?)', (title, link, image_url, source))
         print(f"Заголовок: {title}")
         print(f"Ссылка: {link}")
         print(f"Изображение: {image_url}")
