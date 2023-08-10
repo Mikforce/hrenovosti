@@ -19,6 +19,14 @@
 <link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+      body {
+        background: #ffffff; /* Old browsers */
+        background: -moz-linear-gradient(left, #ffffff 0%, #d6f0ff 33%, #d6f0ff 67%, #ffffff 100%); /* FF3.6-15 */
+        background: -webkit-linear-gradient(left, #ffffff 0%,#d6f0ff 33%,#d6f0ff 67%,#ffffff 100%); /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(to right, #ffffff 0%,#d6f0ff 33%,#d6f0ff 67%,#ffffff 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ffffff',GradientType=1 ); /* IE6-9 */
+      }
+
       .bd-placeholder-img {
         font-size: 1.125rem;
         text-anchor: middle;
@@ -157,9 +165,9 @@
   </symbol>
 </svg>
 
-<div class="col-lg-8 mx-auto p-4 py-md-5">
-  <header class="d-flex align-items-center pb-3 mb-5 border-bottom">
-    <a href="/" class="d-flex align-items-center text-body-emphasis text-decoration-none">
+<div class="col-lg-8 mx-auto">
+  <header class="d-flex align-items-center pb-3 mb-5 border-bottom rounded-bottom bg-white">
+    <a href="/" class="d-flex align-items-center text-body-emphasis text-decoration-none m-2 col-8 mx-auto">
       <span class="bi me-2" width="40" height="32">X</span>
       <span class="fs-4">Хреновости</span>
     </a>
@@ -167,14 +175,16 @@
  
   <main>
     {{range .news}}
-    <article>
-        <h3>{{.Title}}</h3>
-        <img src="{{.ImageURL}}" alt="{{.Title}}" class="img-fluid">
-        
+    <div class="rounded bg-white my-3 p-3">
+      <div class="d-lg-flex">
+        <img src="{{.ImageURL}}" alt="{{.Title}}" class="img-fluid rounded">
+        <h3 class="m-2">{{.Title}}</h3>
+      </div>
+      <div class="d-flex justify-content-end">
         <a href="{{.Link}}" class="btn btn-primary">Read More</a>
-    </article>
+      </div>
+    </div>
    
-    <hr class="col-3 col-md-2 mb-5">
     {{end}}
    
   </main>
@@ -186,6 +196,3 @@
 
     </body>
 </html>
-
-
-
