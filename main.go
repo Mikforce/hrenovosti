@@ -6,6 +6,8 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/exec"
 	"strconv"
 	"time"
 
@@ -18,6 +20,24 @@ type News struct {
 	Title    string
 	ImageURL string
 	Link     string
+}
+
+func gopython() {
+	// Specify the Python script file to execute
+	pythonScript := "main.py"
+
+	// Prepare the command to run the Python script
+	cmd := exec.Command("/usr/bin/python3", pythonScript)
+
+	// Set up pipes for standard output and error
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Execute the Python script
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 }
 
 func parseNews(url string) ([]News, error) {
@@ -131,7 +151,7 @@ func getRandomNews(db *sql.DB) ([]News, error) {
 		}
 
 		// Формируем объект News и добавляем его в список
-		news := News{Title: title, ImageURL: imageUrl, Link: "https://panorama.pub" + link}
+		news := News{Title: title, ImageURL: imageUrl, Link: link}
 		newsList = append(newsList, news)
 	}
 
@@ -193,7 +213,7 @@ func getAllArticles(db *sql.DB, numArticles int) ([]News, error) {
 		}
 
 		// Create a News object and add it to the list
-		article := News{Title: title, ImageURL: imageURL, Link: "https://panorama.pub" + link}
+		article := News{Title: title, ImageURL: imageURL, Link: link}
 		articlesList = append(articlesList, article)
 	}
 
@@ -209,6 +229,8 @@ func main() {
 	r.LoadHTMLGlob("html/*") // Load HTML templates
 
 	go baze()
+	go gopython()
+
 	r.DELETE("/articles/delete", deleteArticleHandler)
 
 	r.GET("/", randomNewsHandler)
@@ -274,67 +296,3 @@ func deleteArticleHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
-
-// package main
-
-// import (
-// 	"database/sql"
-// 	"fmt"
-// 	"log"
-// 	"strings"
-
-// 	"github.com/PuerkitoBio/goquery"
-// )
-
-// func main() {
-// 	// URL страницы с новостями
-// 	url := "https://ria.ru/world/"
-
-// 	// Получаем HTML-контент страницы
-// 	doc, err := goquery.NewDocument(url)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	// Создаем или подключаемся к базе данных SQLite3
-// 	db, err := sql.Open("sqlite3-lite", "news.db")
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	defer db.Close()
-
-// 	// Создаем таблицу, если она не существует
-// 	_, err = db.Exec(`
-// 		CREATE TABLE IF NOT EXISTS news1 (
-// 			id INTEGER PRIMARY KEY,
-// 			title TEXT,
-// 			link TEXT,
-// 			image_url TEXT
-// 		)
-// 	`)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	// Итерируемся по элементам с классом "list-item"
-// 	doc.Find(".list-item").Each(func(i int, s *goquery.Selection) {
-// 		// Получаем заголовок и ссылку
-// 		title := strings.TrimSpace(s.Find(".list-item__title").Text())
-// 		link, _ := s.Find("a").Attr("href")
-
-// 		// Получаем ссылку на изображение, если оно есть
-// 		imageURL, _ := s.Find("img").Attr("src")
-
-// 		// Вставляем данные в базу данных
-// 		_, err := db.Exec("INSERT INTO news (title, link, image_url) VALUES (?, ?, ?)", title, link, imageURL)
-// 		if err != nil {
-// 			log.Println("Ошибка при вставке данных:", err)
-// 		}
-
-// 		// Выводим информацию
-// 		fmt.Println("Заголовок:", title)
-// 		fmt.Println("Ссылка:", link)
-// 		fmt.Println("Изображение:", imageURL)
-// 		fmt.Println("=")
-// 	})
-// }

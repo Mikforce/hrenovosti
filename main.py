@@ -21,7 +21,7 @@ cursor.execute('''
     CREATE TABLE IF NOT EXISTS news (
         id INTEGER PRIMARY KEY,
         title TEXT,
-        link TEXT,
+        link TEXT UNIQUE,  -- Make 'link' column unique to prevent duplicates
         image_url TEXT
     )
 ''')
@@ -37,13 +37,19 @@ for news in news_items:
     else:
         image_url = None
 
-    # Вставляем данные в базу данных
-    cursor.execute('INSERT INTO news (title, link, image_url) VALUES (?, ?, ?)', (title, link, image_url))
+    # Проверяем, есть ли новость с такой ссылкой в базе данных
+    existing_news = cursor.execute('SELECT id FROM news WHERE link = ?', (link,)).fetchone()
 
-    print(f"Заголовок: {title}")
-    print(f"Ссылка: {link}")
-    print(f"Изображение: {image_url}")
-    print("=" * 50)
+    if existing_news:
+        print(f"Новость с ссылкой '{link}' уже существует. Пропускаем.")
+    else:
+        # Вставляем данные в базу данных
+        cursor.execute('INSERT INTO news (title, link, image_url) VALUES (?, ?, ?)', (title, link, image_url))
+
+        print(f"Заголовок: {title}")
+        print(f"Ссылка: {link}")
+        print(f"Изображение: {image_url}")
+        print("=" * 50)
 
 # Сохраняем изменения и закрываем соединение с базой данных
 conn.commit()
