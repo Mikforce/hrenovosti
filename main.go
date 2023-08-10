@@ -339,9 +339,6 @@ func deleteArticleHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 }
 
-// Получение всех новостей:
-// Вы можете получить все новости, отправив GET-запрос на URL вашего веб-сервера. Например:
-
 // GET http://localhost:8080/articles
 // Получение новостей по источнику:
 // Чтобы получить новости по определенному источнику, отправьте GET-запрос на URL вашего веб-сервера с параметром source. Например:
