@@ -24,7 +24,7 @@ type News struct {
 
 func gopython() {
 	// Specify the Python script file to execute
-	pythonScript := "parsria.py"
+	pythonScript := "parse_python/parsria.py"
 
 	// Prepare the command to run the Python script
 	cmd := exec.Command("/usr/bin/python3", pythonScript)
@@ -41,7 +41,7 @@ func gopython() {
 }
 func gopythontwo() {
 	// Specify the Python script file to execute
-	pythonScript := "parspanorama.py"
+	pythonScript := "parse_python/parspanorama.py"
 
 	// Prepare the command to run the Python script
 	cmd := exec.Command("/usr/bin/python3", pythonScript)
