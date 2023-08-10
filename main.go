@@ -178,7 +178,7 @@ func getRandomNews(db *sql.DB) ([]News, error) {
 
 func getAllArticlesHandler(c *gin.Context) {
 	// Получить параметр 'num' из строки запроса
-	num := c.DefaultQuery("num", "3") // По умолчанию 3, если «число» не указано
+	num := c.DefaultQuery("num", "10") // По умолчанию 10, если «число» не указано
 	// Преобразование «число» в целое число
 	numArticles, err := strconv.Atoi(num)
 	if err != nil {
@@ -194,7 +194,7 @@ func getAllArticlesHandler(c *gin.Context) {
 	}
 	defer db.Close()
 
-	// Get all articles from the database
+	// Получить все статьи из базы данных
 	articles, err := getAllArticles(db, numArticles)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error getting articles from database: %v", err)})
@@ -205,7 +205,7 @@ func getAllArticlesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, articles)
 }
 func getAllArticles(db *sql.DB, numArticles int) ([]News, error) {
-	// Execute the query to get all articles from the database
+	// Выполните запрос, чтобы получить все статьи из базы данных
 	query := fmt.Sprintf("SELECT id, title, image_url, link FROM news LIMIT %d", numArticles)
 
 	rows, err := db.Query(query)
@@ -216,7 +216,7 @@ func getAllArticles(db *sql.DB, numArticles int) ([]News, error) {
 
 	articlesList := []News{}
 
-	// Iterate through the result rows and create news objects.
+	// Перебирает строки результатов и создает объекты новостей.
 	for rows.Next() {
 		var id int
 		var title, imageURL, link string
