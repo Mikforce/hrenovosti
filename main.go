@@ -271,7 +271,7 @@ func main() {
 	go gopythontwo()
 
 	r := gin.Default()
-	r.LoadHTMLGlob("html/*") // Load HTML templates
+	r.LoadHTMLGlob("html/*.html") // Load HTML templates
 
 	r.DELETE("/articles/delete", deleteArticleHandler)
 
