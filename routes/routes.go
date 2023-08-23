@@ -21,7 +21,7 @@ func SetupRoutes(r *gin.Engine) {
 	r.Static("/static", "./static")
 	r.POST("/articles/add", handlers.AddArticleHandler)
 
-	fmt.Println("Server started on http://localhost:8080")
-	log.Fatal(r.Run(":8080"))
+	fmt.Println("Server started on http://localhost:80")
+	log.Fatal(r.Run(":80"))
 
 }
